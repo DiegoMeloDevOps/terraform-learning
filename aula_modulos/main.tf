@@ -1,4 +1,38 @@
 
+provider "aws" {
+  region = "us-east-1"
+}
+
+
+data "aws_ami" "ubuntu" {
+
+  most_recent = true
+
+  owners = ["099720109477"]
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+}
+
+
+
 module "vpc" {
   source = "./modules/vpc"
 
@@ -12,13 +46,26 @@ module "vpc" {
 
 
 module "security_group" {
-  
+
   source = "./modules/security-group"
 
   vpc_id = module.vpc.vpc_id
 
 }
 
+module "internet_gateway" {
+  source = "./modules/igw"
+
+  vpc_id    = module.vpc.vpc_id
+  subnet_id = module.vpc.public_subnet_id
+}
+
+module "nat_gateway" {
+  source            = "./modules/nat_gateway"
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_id  = module.vpc.public_subnet_id
+  private_subnet_id = module.vpc.private_subnet_id
+}
 
 locals {
   servers = {
@@ -32,7 +79,7 @@ module "ec2" {
   source   = "./modules/ec2"
   for_each = local.servers
 
-  ami           = "ami-12345678"
+  ami           = data.aws_ami.ubuntu.id
   instance_type = each.value
   instance_name = each.key
 
