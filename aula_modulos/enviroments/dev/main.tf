@@ -1,0 +1,120 @@
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+
+data "aws_ami" "ubuntu" {
+
+  most_recent = true
+
+  owners = ["099720109477"]
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+}
+
+
+
+module "vpc" {
+  source = "../../modules/vpc"
+
+  cidr_block         = "10.0.0.0/16"
+  name_network       = "minha-vpc"
+  cidr_block_public  = "10.0.1.0/24"
+  network_public     = "subnet-publica"
+  cidr_block_private = "10.0.2.0/24"
+  network_private    = "subnet-privada"
+}
+
+
+module "security_group" {
+
+  source = "../../modules/security-group"
+
+  vpc_id = module.vpc.vpc_id
+
+}
+
+module "internet_gateway" {
+  source = "../../modules/igw"
+
+  vpc_id    = module.vpc.vpc_id
+  subnet_id = module.vpc.public_subnet_id
+}
+
+module "nat_gateway" {
+  source            = "../../modules/nat_gateway"
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_id  = module.vpc.public_subnet_id
+  private_subnet_id = module.vpc.private_subnet_id
+
+  depends_on = [module.internet_gateway]
+
+}
+
+locals {
+  servers = {
+    app = "t2.small"
+    api = "t2.micro"
+    db  = "t2.medium"
+  }
+}
+
+module "ec2" {
+  source   = "../../modules/ec2"
+  for_each = local.servers
+
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = each.value
+  instance_name = each.key
+
+  subnet_id = (
+    each.key == "app" ? module.vpc.public_subnet_id : module.vpc.private_subnet_id
+  )
+
+  security_group_id = module.security_group.security_group_id
+
+}
+
+module "secrets_manager" {
+  source = "../../modules/secrets_manager"
+
+  db_username = var.db_username
+  db_password = var.db_password
+  rds_name    = "dev-rds"
+
+}
+
+module "rds" {
+  source                 = "../../modules/rds"
+  identifier_db          = "dev-db"
+  allocated_storage      = 30
+  engine_db              = "mysql"
+  engine_version_db      = "8.0.1"
+  db_name                = "devdb"
+  username               = var.db_username
+  password               = var.db_password
+  vpc_security_group_ids = module.security_group.security_group_id
+  instance_type          = "db.t3.micro"
+  name_snapshot_final    = "backup-dev-db"
+}
+
+
