@@ -43,3 +43,17 @@ variable "vpc_security_group_ids" {
 variable "name_snapshot_final" {
   type = string
 }
+
+variable "rds_subnet_ids" {
+  type = list(string)
+}
+
+variable "rds_security_group_id" {
+  type = string
+}
+
+variable "multi_az" {
+
+  type = bool
+
+}

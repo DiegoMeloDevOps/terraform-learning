@@ -1,0 +1,9 @@
+version: 0.1
+
+projects:
+  - path: enviroments/dev
+    name: ambiente-dev
+  - path: enviroments/homolog
+    name: ambiente-homolog
+  - path: enviroments/prod
+    name: ambiente-prod

@@ -36,12 +36,21 @@ data "aws_ami" "ubuntu" {
 module "vpc" {
   source = "../../modules/vpc"
 
-  cidr_block         = "10.0.0.0/16"
-  name_network       = "minha-vpc"
-  cidr_block_public  = "10.0.1.0/24"
-  network_public     = "subnet-publica"
-  cidr_block_private = "10.0.2.0/24"
-  network_private    = "subnet-privada"
+  cidr_block         = "10.10.0.0/16"
+  cidr_block_public  = "10.20.1.0/24"
+  cidr_block_private = "10.20.10.0/24"
+
+  cidr_rds_a = "10.20.20.0/24"
+  cidr_rds_b = "10.20.21.0/24"
+
+  avaibility_zone_a = "us-east-1a"
+  avaibility_zone_b = "us-east-1b"
+
+
+  name_network    = "homog-vpc"
+  network_private = "homog-privada"
+  network_public  = "homog-publica"
+
 }
 
 
@@ -81,9 +90,10 @@ module "ec2" {
   source   = "../../modules/ec2"
   for_each = local.servers
 
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = each.value
-  instance_name = each.key
+  ami                  = data.aws_ami.ubuntu.id
+  instance_type        = each.value
+  instance_name        = each.key
+  iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 
   subnet_id = (
     each.key == "app" ? module.vpc.public_subnet_id : module.vpc.private_subnet_id
@@ -115,6 +125,9 @@ module "rds" {
   vpc_security_group_ids = module.security_group.security_group_id
   instance_type          = "db.t3.micro"
   name_snapshot_final    = "backup-homolog-db"
+  rds_security_group_id  = module.security_group.rds_security_group_id
+  rds_subnet_ids         = module.vpc.rds_subnet_ids
+  multi_az               = false
 }
 
 

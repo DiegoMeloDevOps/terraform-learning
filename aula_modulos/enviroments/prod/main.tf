@@ -36,12 +36,21 @@ data "aws_ami" "ubuntu" {
 module "vpc" {
   source = "../../modules/vpc"
 
-  cidr_block         = "10.0.0.0/16"
-  name_network       = "minha-vpc"
-  cidr_block_public  = "10.0.1.0/24"
-  network_public     = "subnet-publica"
-  cidr_block_private = "10.0.2.0/24"
-  network_private    = "subnet-privada"
+  cidr_block         = "10.30.0.0/16"
+  cidr_block_public  = "10.30.1.0/24"
+  cidr_block_private = "10.30.10.0/24"
+
+  cidr_rds_a = "10.30.20.0/24"
+  cidr_rds_b = "10.30.21.0/24"
+
+  avaibility_zone_a = "us-east-1a"
+  avaibility_zone_b = "us-east-1b"
+
+
+  name_network    = "prod-vpc"
+  network_private = "prod-privada"
+  network_public  = "prod-publica"
+
 }
 
 
@@ -81,9 +90,10 @@ module "ec2" {
   source   = "../../modules/ec2"
   for_each = local.servers
 
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = each.value
-  instance_name = each.key
+  ami                  = data.aws_ami.ubuntu.id
+  instance_type        = each.value
+  instance_name        = each.key
+  iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 
   subnet_id = (
     each.key == "app" ? module.vpc.public_subnet_id : module.vpc.private_subnet_id
@@ -112,9 +122,38 @@ module "rds" {
   db_name                = "proddb"
   username               = var.db_username
   password               = var.db_password
-  vpc_security_group_ids = module.security_group.security_group_id
+  vpc_security_group_ids = module.security_group.rds_security_group_id
   instance_type          = "db.t3.micro"
   name_snapshot_final    = "backup-prd-db"
+  rds_security_group_id  = module.security_group.rds_security_group_id
+  rds_subnet_ids         = module.vpc.rds_subnet_ids
+  multi_az               = true
 }
 
 
+#criado após o checkov
+
+resource "aws_iam_role" "ec2_role" {
+  name = "ec2-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [
+      {
+        Effect = "Allow"
+
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "ec2-profile"
+  role = aws_iam_role.ec2_role.name
+}

@@ -25,6 +25,11 @@ resource "aws_dynamodb_table" "terraform_lock" {
     type = "S"
   }
 
+  #adicionado após o checkov
+  point_in_time_recovery {
+    enabled = true
+  }
+
 }
 
 resource "aws_s3_bucket_public_access_block" "s3_block_public_acess" {

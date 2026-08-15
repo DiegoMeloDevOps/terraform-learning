@@ -27,9 +27,10 @@ resource "aws_security_group" "web" {
 
   # oque eu to permitindo que saia da rede
   egress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
+    description = "Permitir saida para a internet"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
 
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -38,4 +39,29 @@ resource "aws_security_group" "web" {
     Name = "web-security-group"
   }
 
+}
+# criando o securitu group exclusivo para o banco de dados
+resource "aws_security_group" "rds" {
+  name        = "rds-security-grop"
+  description = "Permite somente a comunicação entre o rds e a aplicação"
+  vpc_id      = var.vpc_id
+
+
+  ingress {
+    description     = "MySQL vindo direto da aplicação"
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.web.id]
+  }
+
+  egress {
+    description = "Permitir saida para a internet"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { Name = "rds-security-group" }
 }
