@@ -424,25 +424,6 @@ As justificativas e os checks ignorados estão documentados em:
 
 ---
 
-## 💰 Análise de custos com Infracost
-
-O projeto também utiliza **Infracost** para estimar os custos da infraestrutura AWS antes do provisionamento.
-
-A análise permite identificar recursos que podem gerar custos, como:
-
-- EC2
-- RDS
-- NAT Gateway
-- Elastic IP
-- S3
-- Outros recursos AWS provisionados pelo Terraform
-
-A documentação da análise de custos está disponível em:
-
-👉 [Infracost](./documentation/infracost.md)
-
----
-
 ## 📚 Documentação
 
 A documentação técnica complementar do projeto está organizada na pasta `documentation/`.
