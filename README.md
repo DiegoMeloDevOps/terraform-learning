@@ -420,7 +420,7 @@ Alguns checks foram intencionalmente ignorados por serem considerados incompatí
 
 As justificativas e os checks ignorados estão documentados em:
 
-👉 [Checkov - Correções](./Documentação/checkov-correcaos.md)
+👉 [Checkov - Correções](./aula_modulos/Documentação/checkov-correcaos.md)
 
 ---
 
@@ -428,8 +428,8 @@ As justificativas e os checks ignorados estão documentados em:
 
 A documentação técnica complementar do projeto está organizada na pasta `documentation/`.
 
-- [Terraform Docs](./Documentação/terraform-docs.md) — documentação automática de todos os módulos Terraform.
-- [Checkov - Correções](./Documentação/checkov-correcaos.md) — análise de segurança, correções aplicadas e justificativas dos checks ignorados.
+- [Terraform Docs](./aula_modulos/Documentação/terraform-docs.md) — documentação automática de todos os módulos Terraform.
+- [Checkov - Correções](./aula_modulos//Documentação/checkov-correcaos.md) — análise de segurança, correções aplicadas e justificativas dos checks ignorados.
 
 ---
 
