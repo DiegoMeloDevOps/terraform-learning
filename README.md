@@ -1,16 +1,20 @@
 # 🚀 Terraform AWS Infrastructure with Modules
 
-Este projeto provisiona uma infraestrutura AWS com **Terraform** e princípios de **Infrastructure as Code (IaC)**. A arquitetura é organizada em módulos reutilizáveis, separando rede, conectividade, segurança, computação, banco de dados, segredos e state remoto.
+Este projeto provisiona uma infraestrutura AWS utilizando **Terraform** e princípios de **Infrastructure as Code (IaC)**.
 
-Os ambientes disponíveis são `dev`, `homolog` e `prod`. Cada ambiente possui sua própria VPC, CIDRs isolados e seu próprio state Terraform no backend S3.
+A arquitetura é organizada em módulos reutilizáveis, separando responsabilidades como rede, conectividade, segurança, computação, banco de dados, gerenciamento de segredos e armazenamento remoto do state.
+
+Os ambientes disponíveis são `dev`, `homolog` e `prod`. Cada ambiente possui sua própria VPC, CIDRs isolados e state Terraform separado no backend S3.
+
+---
 
 ## 🏗️ Arquitetura
 
 ```mermaid
 flowchart TB
-    TF["Terraform\n(dev / homolog / prod)"]
-    State["S3\nTerraform state"]
-    Lock["DynamoDB\nState locking"]
+    TF["Terraform<br/>(dev / homolog / prod)"]
+    State["S3<br/>Terraform State"]
+    Lock["DynamoDB<br/>State Locking"]
 
     TF --> State
     TF --> Lock
@@ -21,25 +25,25 @@ flowchart TB
     subgraph AWS["AWS · us-east-1"]
         subgraph VPC["VPC · Ambiente"]
 
-            PublicRT["Route Table pública"]
-            Public["Subnet pública"]
+            PublicRT["Route Table Pública"]
+            Public["Subnet Pública"]
 
-            NAT["NAT Gateway\n+ Elastic IP"]
+            NAT["NAT Gateway<br/>+ Elastic IP"]
 
-            PrivateRT["Route Table privada"]
-            Private["Subnet privada\nApp/API"]
+            PrivateRT["Route Table Privada"]
+            Private["Subnet Privada<br/>App/API"]
 
-            RDSRT["Subnets privadas RDS\nAZ-a / AZ-b"]
+            RDSRT["Subnets Privadas RDS<br/>AZ-a / AZ-b"]
 
-            App["EC2 app\nt2.small"]
-            API["EC2 api\nt2.micro"]
-            DBEC2["EC2 db\nt2.medium"]
+            App["EC2 app<br/>t2.small"]
+            API["EC2 api<br/>t2.micro"]
+            DBEC2["EC2 db<br/>t2.medium"]
 
-            WebSG["Security Group web\nHTTP 80 / HTTPS 443"]
-            RDS_SG["Security Group RDS\nTCP 3306 somente do SG da aplicação"]
+            WebSG["Security Group Web<br/>HTTP 80 / HTTPS 443"]
+            RDSSG["Security Group RDS<br/>TCP 3306 somente do SG da aplicação"]
 
             Secret["AWS Secrets Manager"]
-            RDS["Amazon RDS MySQL\nprivado"]
+            RDS["Amazon RDS MySQL<br/>Privado"]
 
         end
     end
@@ -60,17 +64,19 @@ flowchart TB
     WebSG --> API
     WebSG --> DBEC2
 
-    App -. "MySQL 3306" .-> RDS_SG
-    API -. "MySQL 3306" .-> RDS_SG
-    RDS_SG --> RDS
+    App -. "MySQL 3306" .-> RDSSG
+    API -. "MySQL 3306" .-> RDSSG
+    RDSSG --> RDS
 
-    Secret -. "credenciais" .-> RDS
+    Secret -. "Credenciais" .-> RDS
 
     Public --> RDSRT
     Private --> RDSRT
 ```
 
-### Comunicação entre os recursos
+---
+
+## 🔄 Comunicação entre os recursos
 
 | Origem | Destino | Fluxo | Estado |
 |---|---|---|---|
@@ -85,11 +91,13 @@ flowchart TB
 
 > A EC2 chamada `db` é uma instância computacional do projeto; ela não é o Amazon RDS. O RDS é um recurso de banco de dados separado.
 
+---
+
 ## 🌐 Segmentação de rede
 
 Cada ambiente possui uma VPC independente e CIDRs que não se sobrepõem.
 
-| Ambiente | VPC | Subnet pública | Subnet privada App/API | RDS A | RDS B |
+| Ambiente | VPC | Subnet Pública | Subnet Privada App/API | RDS A | RDS B |
 |---|---|---|---|---|---|
 | `dev` | `10.10.0.0/16` | `10.10.1.0/24` | `10.10.10.0/24` | `10.10.20.0/24` | `10.10.21.0/24` |
 | `homolog` | `10.20.0.0/16` | `10.20.1.0/24` | `10.20.10.0/24` | `10.20.20.0/24` | `10.20.21.0/24` |
@@ -104,13 +112,15 @@ O RDS utiliza duas subnets privadas em **Availability Zones diferentes**.
 ```text
 RDS Subnet Group
 ├── RDS Subnet A → us-east-1a
-│   └── 10.x0.20.0/24
+│   └── 10.x.20.0/24
 │
 └── RDS Subnet B → us-east-1b
-    └── 10.x0.21.0/24
+    └── 10.x.21.0/24
 ```
 
 As subnets do banco não são destinadas às EC2 da aplicação. Elas existem especificamente para fornecer a rede necessária ao RDS.
+
+---
 
 ## 🔐 Security Groups
 
@@ -125,12 +135,12 @@ Internet
    │
    ├── TCP/80
    └── TCP/443
-         │
-         ▼
+          │
+          ▼
    Security Group Web
-         │
-         ▼
-      EC2 App
+          │
+          ▼
+       EC2 App
 ```
 
 ### Security Group do RDS
@@ -147,7 +157,7 @@ Security Group da aplicação
    Security Group RDS
           │
           ▼
-     Amazon RDS
+      Amazon RDS
 ```
 
 Não existe uma regra:
@@ -157,6 +167,8 @@ Não existe uma regra:
 ```
 
 Portanto, o banco não fica diretamente exposto à Internet.
+
+---
 
 ## 🛠️ Tecnologias utilizadas
 
@@ -174,6 +186,8 @@ Portanto, o banco não fica diretamente exposto à Internet.
 | Amazon RDS MySQL | Banco de dados relacional privado |
 | Ubuntu | Sistema operacional das EC2 |
 
+---
+
 ## 📦 Recursos e módulos
 
 | Módulo/local | Recursos principais |
@@ -186,6 +200,8 @@ Portanto, o banco não fica diretamente exposto à Internet.
 | `modules/ec2/` | Instâncias EC2 criadas com `for_each` |
 | `modules/secrets_manager/` | Segredos de credenciais por ambiente |
 | `modules/rds/` | DB Subnet Group e instância RDS MySQL privada |
+
+---
 
 ## 🗄️ Amazon RDS
 
@@ -227,6 +243,8 @@ db_subnet_group_name   = aws_db_subnet_group.this.name
 vpc_security_group_ids = [var.rds_security_group_id]
 ```
 
+---
+
 ## 🖥️ Instâncias EC2
 
 As instâncias são criadas dinamicamente com `for_each`:
@@ -249,6 +267,8 @@ locals {
 
 > A EC2 `db` não substitui o RDS. Ela representa uma instância computacional independente dentro da arquitetura.
 
+---
+
 ## 🔎 Busca dinâmica da AMI
 
 A AMI do Ubuntu é obtida por um `data source`, sem depender de um ID fixo:
@@ -265,15 +285,20 @@ data "aws_ami" "ubuntu" {
 }
 ```
 
+---
+
 ## 📂 Estrutura do projeto
 
 ```text
 .
-├── bootstrap/                 # Backend remoto: S3 e DynamoDB
+├── bootstrap/
+│   └── # Backend remoto: S3 e DynamoDB
+│
 ├── enviroments/
 │   ├── dev/
 │   ├── homolog/
 │   └── prod/
+│
 ├── modules/
 │   ├── ec2/
 │   ├── igw/
@@ -282,10 +307,18 @@ data "aws_ami" "ubuntu" {
 │   ├── secrets_manager/
 │   ├── security-group/
 │   └── vpc/
-├── main.tf                    # Configuração raiz de laboratório
+│
+├── documentation/
+│   ├── terraform-docs.md
+│   ├── checkov-correcaos.md
+│   └── infracost.md
+│
+├── main.tf
 ├── terraform.tf
 └── README.md
 ```
+
+---
 
 ## 🧠 Conceitos Terraform utilizados
 
@@ -308,12 +341,15 @@ data "aws_ami" "ubuntu" {
 - AWS Secrets Manager
 - Separação de ambientes
 
+---
+
 ## 🚀 Como executar
 
 ### 1. Criar o backend remoto
 
 ```powershell
 cd bootstrap
+
 terraform init
 terraform fmt -check
 terraform validate
@@ -327,6 +363,7 @@ Após criar o backend, inicialize o ambiente desejado:
 
 ```powershell
 cd enviroments\dev
+
 terraform init -reconfigure
 terraform fmt -check
 terraform validate
@@ -343,11 +380,13 @@ terraform apply
 
 somente depois de revisar o plano de execução.
 
+---
+
 ## 🔐 Segurança e custos
 
 - Os arquivos `*.tfvars`, `.terraform/` e `*.tfstate*` são ignorados pelo Git.
-- As variáveis de usuário e senha do banco foram declaradas como sensíveis.
-- Não versione senhas.
+- As variáveis de usuário e senha do banco são tratadas como sensíveis.
+- Não versione senhas ou outras credenciais reais.
 - Prefira variáveis de ambiente como `TF_VAR_db_username` e `TF_VAR_db_password`.
 - O bucket de state possui versionamento, bloqueio de acesso público e `prevent_destroy`.
 - O Security Group do RDS não permite acesso de `0.0.0.0/0` na porta `3306`.
@@ -357,6 +396,61 @@ somente depois de revisar o plano de execução.
 - O SG web atualmente permite HTTP/HTTPS de `0.0.0.0/0`; em produção, restrinja os CIDRs ou utilize um Application Load Balancer.
 - NAT Gateway e Elastic IP geram custos enquanto estiverem ativos.
 - Amazon RDS gera custos enquanto a instância estiver provisionada.
+
+---
+
+## 🔍 Segurança com Checkov
+
+O projeto utiliza **Checkov** para realizar análise de segurança da infraestrutura Terraform.
+
+Foram aplicadas correções para os principais controles identificados durante a análise, incluindo:
+
+- Criptografia do armazenamento do RDS.
+- Atualização automática de versões menores.
+- Monitoramento do RDS.
+- Performance Insights.
+- Proteção contra exclusão acidental.
+- Exportação de logs do RDS.
+- Snapshots finais.
+- RDS sem acesso público.
+- Security Group exclusivo para o RDS.
+- Restrição da porta `3306` ao Security Group da aplicação.
+
+Alguns checks foram intencionalmente ignorados por serem considerados incompatíveis com o objetivo do ambiente de **portfólio/laboratório**.
+
+As justificativas e os checks ignorados estão documentados em:
+
+👉 [Checkov - Correções](./documentation/checkov-correcaos.md)
+
+---
+
+## 💰 Análise de custos com Infracost
+
+O projeto também utiliza **Infracost** para estimar os custos da infraestrutura AWS antes do provisionamento.
+
+A análise permite identificar recursos que podem gerar custos, como:
+
+- EC2
+- RDS
+- NAT Gateway
+- Elastic IP
+- S3
+- Outros recursos AWS provisionados pelo Terraform
+
+A documentação da análise de custos está disponível em:
+
+👉 [Infracost](./documentation/infracost.md)
+
+---
+
+## 📚 Documentação
+
+A documentação técnica complementar do projeto está organizada na pasta `documentation/`.
+
+- [Terraform Docs](./documentação/terraform-docs.md) — documentação automática de todos os módulos Terraform.
+- [Checkov - Correções](./documentação/checkov-correcaos.md) — análise de segurança, correções aplicadas e justificativas dos checks ignorados.
+
+---
 
 ## 📌 Status da infraestrutura
 
@@ -398,4 +492,20 @@ somente depois de revisar o plano de execução.
 - [x] CIDRs independentes
 - [x] State separado por ambiente
 
-```
+---
+
+## 🎯 Objetivo do projeto
+
+Este projeto foi desenvolvido como um laboratório prático de **DevOps, Cloud Computing e Infrastructure as Code**, com foco em:
+
+- Modularização Terraform.
+- Provisionamento de infraestrutura AWS.
+- Separação de ambientes.
+- Segurança de recursos cloud.
+- Gerenciamento remoto de state.
+- Networking AWS.
+- Banco de dados gerenciado.
+- Gerenciamento de segredos.
+- Análise de segurança com Checkov.
+- Análise de custos com Infracost.
+- Documentação automatizada com Terraform Docs.
