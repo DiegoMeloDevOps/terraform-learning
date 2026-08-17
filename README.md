@@ -430,6 +430,7 @@ A documentação técnica complementar do projeto está organizada na pasta `doc
 
 - [Terraform Docs](./aula_modulos/Documentação/terraform-docs.md) — documentação automática de todos os módulos Terraform.
 - [Checkov - Correções](./aula_modulos//Documentação/checkov-correcaos.md) — análise de segurança, correções aplicadas e justificativas dos checks ignorados.
+- [FinOps / Custos](./aula_modulos//Documentação/finops.md) — estimativa e análise detalhada de custos operacionais (Infracost) para os ambientes.
 
 ---
 
