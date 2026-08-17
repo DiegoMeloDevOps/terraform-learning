@@ -23,6 +23,7 @@ resource "aws_db_instance" "mysql" {
   # para impedir que seja destruido o rds ao rodarem um terraform destroy, passarei como variavel para o ambiente dev/homo ser false pelo o custo
   deletion_protection          = var.deletion_protection
 
+  # se ele ira iter replicado a sua rede em outra zona AZ
   multi_az = var.multi_az
 
   enabled_cloudwatch_logs_exports = [
