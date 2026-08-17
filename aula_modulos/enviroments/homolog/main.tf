@@ -1,6 +1,5 @@
-
 provider "aws" {
-  region = "us-east-1"
+  region = var.region_aws
 }
 
 
@@ -43,8 +42,8 @@ module "vpc" {
   cidr_rds_a = "10.20.20.0/24"
   cidr_rds_b = "10.20.21.0/24"
 
-  avaibility_zone_a = "us-east-1a"
-  avaibility_zone_b = "us-east-1b"
+  availability_zone_a = "us-east-1a"
+  availability_zone_b = "us-east-1b"
 
 
   name_network    = "homog-vpc"
@@ -124,10 +123,13 @@ module "rds" {
   password               = var.db_password
   vpc_security_group_ids = module.security_group.security_group_id
   instance_type          = "db.t3.micro"
+   # para caso mude o name_snapshot_final para true
   name_snapshot_final    = "backup-homolog-db"
   rds_security_group_id  = module.security_group.rds_security_group_id
   rds_subnet_ids         = module.vpc.rds_subnet_ids
   multi_az               = false
+  deletion_protection = false
+  snapshot_enviroment = false
 }
 
 

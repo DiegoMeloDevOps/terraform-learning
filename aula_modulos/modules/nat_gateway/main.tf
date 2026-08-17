@@ -15,7 +15,7 @@ resource "aws_nat_gateway" "nat" {
   }
 }
 
-resource "aws_route_table" "route_table_private_nat" {
+resource "aws_route_table" "private_instances" {
   vpc_id = var.vpc_id
 
   route {
@@ -24,11 +24,11 @@ resource "aws_route_table" "route_table_private_nat" {
   }
 
   tags = {
-    Name = "private-route-table"
+    Name = "private-instances-route-table"
   }
 }
 
 resource "aws_route_table_association" "private_nat" {
   subnet_id      = var.private_subnet_id
-  route_table_id = aws_route_table.route_table_private_nat.id
+  route_table_id = aws_route_table.private_instances.id
 }

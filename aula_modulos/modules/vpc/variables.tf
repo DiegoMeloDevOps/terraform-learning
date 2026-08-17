@@ -32,10 +32,10 @@ variable "cidr_rds_b" {
   type = string
 }
 
-variable "avaibility_zone_a" {
+variable "availability_zone_a" {
   type = string
 }
 
-variable "avaibility_zone_b" {
+variable "availability_zone_b" {
   type = string
 }

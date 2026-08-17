@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.region_aws
 }
 
 
@@ -84,9 +84,9 @@ module "vpc" {
 
 
 
-  avaibility_zone_a = "us-east-1a"
+  availability_zone_a = "us-east-1a"
 
-  avaibility_zone_b = "us-east-1b"
+  availability_zone_b = "us-east-1b"
 
 
 
@@ -164,7 +164,6 @@ locals {
 
     api = "t2.micro"
 
-    db = "t2.medium"
 
   }
 
@@ -227,32 +226,22 @@ module "secrets_manager" {
 module "rds" {
 
   source = "../../modules/rds"
-
   identifier_db = "dev-db"
-
   allocated_storage = 30
-
   engine_db = "mysql"
-
   engine_version_db = "8.0.1"
-
   db_name = "devdb"
-
   username = var.db_username
-
   password = var.db_password
-
   vpc_security_group_ids = module.security_group.security_group_id
-
   instance_type = "db.t3.micro"
-
+  # para caso mude o name_snapshot_final para true
   name_snapshot_final = "backup-dev-db"
-
   rds_subnet_ids = module.vpc.rds_subnet_ids
-
   rds_security_group_id = module.security_group.rds_security_group_id
-
   multi_az = false
+  deletion_protection = false
+  snapshot_enviroment = false
 
 }
 

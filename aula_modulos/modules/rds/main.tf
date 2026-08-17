@@ -20,7 +20,8 @@ resource "aws_db_instance" "mysql" {
   auto_minor_version_upgrade   = true
   monitoring_interval          = 60
   performance_insights_enabled = true
-  deletion_protection          = true
+  # para impedir que seja destruido o rds ao rodarem um terraform destroy, passarei como variavel para o ambiente dev/homo ser false pelo o custo
+  deletion_protection          = var.deletion_protection
 
   multi_az = var.multi_az
 
@@ -43,7 +44,8 @@ resource "aws_db_instance" "mysql" {
   password = var.password
 
   # comando para criar um backup do banco antes de aplicar o destroy
-  skip_final_snapshot = false
+  # passei como variavel para alterar para cada ambiente , como dev e homog
+  skip_final_snapshot = var.snapshot_enviroment
   # quero separar o nome para cada snapshot de acordo com o seu ambiente
   final_snapshot_identifier = var.name_snapshot_final
   # não quero deixar acessivel a internet
@@ -53,7 +55,7 @@ resource "aws_db_instance" "mysql" {
 
 # cria a Role e anexa a política oficial da AWS para monitoramento de banco de dados:
 resource "aws_iam_role" "rds_monitoring" {
-  name = "rds_monitoring_role"
+  name = "${var.identifier_db}_monitoring_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"

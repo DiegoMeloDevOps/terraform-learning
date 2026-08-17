@@ -57,3 +57,11 @@ variable "multi_az" {
   type = bool
 
 }
+
+variable "deletion_protection" {
+  type = bool
+}
+
+variable "snapshot_enviroment" {
+  type = bool
+}

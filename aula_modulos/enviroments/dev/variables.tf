@@ -10,3 +10,8 @@ variable "db_password" {
   description = "senha do banco"
   sensitive   = true
 }
+
+variable "region_aws" {
+  type = string
+  default = "us-east-1"
+}

@@ -13,6 +13,7 @@ resource "aws_instance" "servers" {
 
   monitoring = true
 
+# criptografia do disco
   root_block_device {
     encrypted = true
   }
